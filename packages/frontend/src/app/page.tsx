@@ -30,7 +30,7 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
 
@@ -44,16 +44,30 @@ export default function Home() {
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: input }),
+      });
+
+      if (!response.ok) throw new Error("Backend is unreachable");
+
+      const data = await response.json();
+      
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "bot",
-        content: `I've received your message: "${userMessage.content}". This is a lightweight preview of our AI interaction.`,
+        content: data.reply,
       };
       setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+        console.error("Backend is unreachable: " + error);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (
