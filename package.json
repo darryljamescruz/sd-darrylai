@@ -4,10 +4,16 @@
   "private": true,
   "description": "",
   "scripts": {
-    "test": "pnpm -r test"
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "test": "turbo test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.29.2"
+  "packageManager": "pnpm@10.29.2",
+  "devDependencies": {
+    "turbo": "^2.9.6"
+  }
 }
