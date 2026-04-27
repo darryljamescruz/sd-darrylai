@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SendHorizontal, Bot, User, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 type Message = {
   id: string;
   role: "user" | "bot";
   content: string;
+  thought?: string;
 };
 
 export default function Home() {
@@ -45,12 +47,20 @@ export default function Home() {
     setIsTyping(true);
 
     try {
+      const history = messages.map(m => ({
+        role: m.role === "bot" ? "assistant" : "user",
+        content: m.content
+      }));
+
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ 
+          message: input,
+          history: history
+        }),
       });
 
       if (!response.ok) throw new Error("Backend is unreachable");
@@ -61,10 +71,17 @@ export default function Home() {
         id: (Date.now() + 1).toString(),
         role: "bot",
         content: data.reply,
+        thought: data.thought
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-        console.error("Backend is unreachable: " + error);
+        console.error("Backend error:", error);
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "bot",
+          content: "Sorry, I'm having trouble connecting to the server. Please make sure the backend is running.",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
     }
@@ -122,14 +139,27 @@ export default function Home() {
                   </Avatar>
                   
                   <div className={`flex flex-col gap-1 max-w-[80%] ${m.role === "user" ? "items-end" : "items-start"}`}>
+                    {m.thought && (
+                      <div className="mb-2 p-3 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-xl text-[12px] text-amber-800 dark:text-amber-200/70 italic leading-relaxed">
+                        <div className="flex items-center gap-1.5 mb-1 not-italic font-semibold uppercase tracking-wider text-[10px] opacity-70">
+                          <Sparkles size={10} />
+                          Thinking Process
+                        </div>
+                        {m.thought}
+                      </div>
+                    )}
                     <div
                       className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
                         m.role === "user"
                           ? "bg-primary text-primary-foreground rounded-tr-none"
-                          : "bg-muted/50 border rounded-tl-none"
+                          : "bg-muted/50 border rounded-tl-none prose dark:prose-invert prose-sm max-w-none"
                       }`}
                     >
-                      {m.content}
+                      {m.role === "user" ? (
+                        m.content
+                      ) : (
+                        <ReactMarkdown>{m.content}</ReactMarkdown>
+                      )}
                     </div>
                   </div>
                 </motion.div>
