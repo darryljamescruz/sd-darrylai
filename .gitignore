@@ -3,4 +3,11 @@ dist
 .DS_Store
 pnpm-debug.log*
 .env
+
+
+
 overview.md
+GEMINI.md
+CLAUDE.md
+CURSOR.md
+prompts.ts
